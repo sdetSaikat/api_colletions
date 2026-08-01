@@ -1,0 +1,101 @@
+pipeline {
+
+    agent any
+
+    stages {
+
+        stage('Build') {
+            steps {
+                echo "Building the war"
+            }
+        }
+
+        stage('Deploy to QA') {
+            steps {
+                echo "Deploying to QA"
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/sdetSaikat/api_colletions'
+            }
+        }
+
+        stage('Pull Docker Images') {
+            parallel {
+
+                stage('Pull GoRest DD Image') {
+                    steps {
+                        sh 'docker pull sdetsaikat/gorestddtest:1.0'
+                    }
+                }
+
+                stage('Pull GoRest Workflow Image') {
+                    steps {
+                        sh 'docker pull sdetsaikat/gorestworkflow:1.0'
+                    }
+                }
+
+            }
+        }
+
+        stage('Run API Test Cases') {
+            parallel {
+
+                stage('Run DD Collection') {
+                    steps {
+                        sh 'docker run --rm -v $(pwd)/newman:/app/results sdetsaikat/gorestddtest:1.0'
+                    }
+                }
+
+                stage('Run Workflow Collection') {
+                    steps {
+                        sh 'docker run --rm -v $(pwd)/newman:/app/results sdetsaikat/gorestworkflow:1.0'
+                    }
+                }
+
+            }
+        }
+
+        stage('Publish Reports') {
+            parallel {
+
+                stage('Publish DD Report') {
+                    steps {
+                        publishHTML([
+                            allowMissing: false,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: 'newman',
+                            reportFiles: 'gorestdd.html',
+                            reportName: 'GoRest DD Report'
+                        ])
+                    }
+                }
+
+                stage('Publish Workflow Report') {
+                    steps {
+                        publishHTML([
+                            allowMissing: false,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: 'newman',
+                            reportFiles: 'gorestworkflow.html',
+                            reportName: 'GoRest Workflow Report'
+                        ])
+                    }
+                }
+
+            }
+        }
+
+        stage('Deploy to PROD') {
+            steps {
+                echo "Deploying to PROD"
+            }
+        }
+
+    }
+
+}
