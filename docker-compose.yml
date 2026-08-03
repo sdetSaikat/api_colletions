@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+
+  gorest:
+    image: sdetsaikat/gorestworkflow:1.0
+    volumes:
+      - ./results:/app/results
+
+  gorestdd:
+    image: sdetsaikat/gorestddtest:1.0
+    volumes:
+      - ./results:/app/results

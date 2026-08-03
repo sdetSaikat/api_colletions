@@ -1,0 +1,64 @@
+pipeline {
+
+    agent any
+
+    stages {
+
+        stage('Build') {
+            steps {
+                echo "Building the war"
+            }
+        }
+
+        stage('Deploy to QA') {
+            steps {
+                echo "Deploying to QA"
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/sdetSaikat/api_colletions'
+            }
+        }
+
+
+        stage('Run API Test Cases') {
+            steps {
+                sh 'docker compose up'
+            }
+        }
+
+        stage('Publish HTML Extra Report') {
+            steps {
+                publishHTML([
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: false,
+                    keepAll: true,
+                    reportDir: 'results',
+                    reportFiles: 'gorestdd.html',
+                    reportName: 'GoRest DD Report',
+
+                ])
+
+                publishHTML([
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: false,
+                    keepAll: true,
+                    reportDir: 'newman',
+                    reportFiles: 'gorest.html',
+                    reportName: 'GoRest Workflow Report',
+
+                ])
+            }
+        }
+
+        stage('Deploy to PROD') {
+            steps {
+                echo "Deploying to PROD"
+            }
+        }
+
+    }
+
+}
